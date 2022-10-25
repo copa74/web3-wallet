@@ -19,39 +19,43 @@ function App() {
   };
 
   const onLogin = async (provider) => {
-    const web3 = new Web3(provider);
+    const web3 = new Web3(provider); 
     const accounts = await web3.eth.getAccounts();
     const chainId = await web3.eth.getChainId();
-    if (accounts.length === 0) {
+    if (accounts.length === 0) { // 로그인 실패시
+      onLogout();
       console.log("Please connect to MetaMask!");
-    } else if (accounts[0] !== currentAccount) {
-      setProvider(provider);
-      setWeb3(web3);
-      setChainId(chainId);
-      setCurrentAccount(accounts[0]);
-      setIsConnected(true);
+    } else if (accounts[0] !== currentAccount) { // 로그인 성공
+      setProvider(provider); // provider 셋팅
+      setWeb3(web3);         // web3 셋팅
+      setChainId(chainId);  // 현재 지갑 네트워크  셋팅
+      setCurrentAccount(accounts[0]); // 지갑 주소 셋팅
+      setIsConnected(true);  // 연결된상태를 프론트에 알리는 state 셋팅
     }
   };
 
   useEffect(() => {
-    const handleAccountsChanged = async (accounts) => {
-      const web3Accounts = await web3.eth.getAccounts();
-      if (accounts.length === 0) {
-        onLogout();
-      } else if (accounts[0] !== currentAccount) {
-        setCurrentAccount(accounts[0]);
+      const handleAccountsChanged = async (accounts) => {
+        const web3Accounts = await web3.eth.getAccounts(); //지갑
+        if (accounts.length === 0) { // 지갑이 없으면 ? 
+          console.log("Please connect to MetaMask!");
+        } else if (accounts[0] !== currentAccount) {
+          setCurrentAccount(accounts[0]); // 지갑 연결
+          setIsConnected(true); // 지갑연결 확인 
+        }
       }
-    };
 
-    const handleChainChanged = async (chainId) => {
-      const web3ChainId = await web3.eth.getChainId();
-      setChainId(web3ChainId);
-    };
+      const handleChainChanged = async (chainId) => {
+        const web3ChainId = await web3.eth.getChainId(); 
+        setChainId(web3ChainId);  // 네트워크  state에 저장 
+      };
 
-    if (isConnected) {
-      provider.on("accountsChanged", handleAccountsChanged);
-      provider.on("chainChanged", handleChainChanged);
+      if (isConnected) {
+      provider.on("accountsChanged", handleAccountsChanged);  // 계정 전환 감지
+      provider.on("chainChanged", handleChainChanged); // 네트워크 전환 감지
     }
+
+    // ethereum.on('disconnect', handler: (error: ProviderRpcError) => void);
 
     return () => {
       if (isConnected) {
@@ -61,17 +65,22 @@ function App() {
     };
   }, [isConnected]);
 
-  const onLogout = () => {
-    setIsConnected(false);
-    setCurrentAccount(null);
-  };
 
   const getCurrentNetwork = (chainId) => {
     return NETWORKS[chainId];
   };
 
+  const onLogout = () => {
+    setIsConnected(false);
+    setCurrentAccount(null);
+    setWeb3(null);
+    setChainId(null);
+    setProvider(null);
+  }
+
   return (
     <div>
+      <button style={{ position: "absolute" }}  onClick={onLogout} >로그아웃</button>
       <header className="main-header">
         <h1>React &amp; Web3</h1>
         <nav className="nav">
@@ -89,7 +98,7 @@ function App() {
             currentAccount={currentAccount}
             currentNetwork={getCurrentNetwork(chainId)}
           />
-        )}
+        )} 
       </main>
     </div>
   );
